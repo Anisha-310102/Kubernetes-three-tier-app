@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3-Tier App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .user-card { border: 1px solid #ddd; padding: 15px; margin: 10px; border-radius: 5px; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: red; padding: 10px; background: #ffeeee; border-radius: 5px; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to 3-Tier Kubernetes App!</h1>
+        <h2>Users from Backend API:</h2>
+        <div id="status" class="loading">🔄 Loading users...</div>
+        <div id="users"></div>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            try {
+                // Use relative path - Nginx will proxy /api to backend-service:3000
+                const response = await fetch('/api/users');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const users = await response.json();
+                
+                // Update status
+                document.getElementById('status').className = 'success';
+                document.getElementById('status').innerHTML = '✅ Successfully loaded users from backend!';
+                
+                // Display users
+                const usersContainer = document.getElementById('users');
+                users.forEach(user => {
+                    usersContainer.innerHTML += `
+                        <div class="user-card">
+                            <h3>${user.name}</h3>
+                            <p>Email: ${user.email}</p>
+                            <p>ID: ${user.id}</p>
+                        </div>
+                    `;
+                });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Show error message
+                document.getElementById('status').className = 'error';
+                document.getElementById('status').innerHTML = `
+                    ❌ Error loading users: ${error.message}<br>
+                    <small>Make sure backend is running and nginx is properly configured.</small>
+                `;
+            }
+        }
+
+        // Load users when page loads
+        loadUsers();
+    </script>
+</body>
+</html>
